@@ -1,0 +1,1 @@
+const socket = io('http://localhoat:3000');

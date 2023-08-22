@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      list-style: none;
+    }
+
+    .login-box {
+      width: 340px;
+      margin: 0 auto;
+      padding: 50px 20px;
+      background-color: bisque;
+    }
+
+    .name {
+      margin: 20px 0;
+    }
+
+    .label {
+      color: #5b21b6;
+    }
+
+    .input {
+      display: inline-block;
+      width: 230px;
+      height: 30px;
+      border: 1px solid #4f46e5;
+      border-radius: 4px;
+    }
+
+    .login {
+      display: inline-block;
+      width: 300px;
+      height: 40px;
+      color: #5b21b6;
+      background-color: #c4b5fd;
+      border: none;
+      border-radius: 4px;
+    }
+
+    .login:hover {
+      cursor: pointer;
+      color: #c4b5fd;
+      background-color: #5b21b6;
+    }
+
+    .chat-box {
+      width: 1000px;
+      height: 700px;
+      margin: 10px auto;
+      border: 1px solid black;
+      border-radius: 5px;
+      display: flex;
+    }
+
+    .member {
+      width: 300px;
+      background-color: gray;
+    }
+
+    .user {
+      height: 70px;
+      line-height: 70px;
+      font-size: 24px;
+      color: white;
+      padding: 0 20px;
+      border-bottom: 1px solid black;
+    }
+
+    .list-btn {
+      height: 40px;
+      line-height: 40px;
+      padding: 0 20px;
+      border-bottom: 1px solid black;
+      cursor: pointer;
+    }
+
+    .message {
+      flex: 1;
+      height: 100%;
+      background-color: cornsilk;
+    }
+
+    .view {
+      height: 500px;
+      border-bottom: 1px solid gray;
+    }
+
+    .system {
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .msg-system {
+      margin: 5px 0;
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background-color: lightgray;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <div class="login-box">
+      <div class="name">
+        <span class="label">用户名：</span>
+        <input id="name" class="input" />
+      </div>
+      <div class="name">
+        <button id="login_btn" class="login">登录</button>
+      </div>
+    </div>
+
+    <div class="chat-box">
+      <div class="member">
+        <div id="user" class="user"></div>
+        <div id="list_btn" class="list-btn">用户列表</div>
+        <div class="user-list">
+          <ul>
+
+          </ul>
+        </div>
+      </div>
+      <div class="message">
+        <div class="view">
+          <!-- <div class="msg-system"></div> -->
+          <div class="msg-mine"></div>
+          <div class="msg-others"></div>
+        </div>
+        <div class="send"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/jquery.js"></script>
+  <!-- <script src="js/index.js"></script> -->
+  <script>
+    const socket = io('http://localhost:3000');
+
+    $('#login_btn').on('click', function () {
+      let userName = $('#name').val().trim();
+      if (!userName) {
+        alert('请输入用户名');
+        return;
+      }
+
+      socket.emit('login', { userName })
+
+      $('#user').textContent = `<p>${userName}</p>`;
+    })
+
+    socket.on('loginError', ({ msg }) => alert(msg));
+    socket.on('loginSuccess', ({ msg, userName, user }) => {
+      alert(msg);
+      $('#user').text(userName);
+
+      const userList = user.filter((item) => item !== userName);
+    });
+
+    socket.on('addUser', ({ userName }) => {
+      $('.view').append(`
+        <div class="system">
+          <span class="msg-system">'${userName}'加入了群聊</span>  
+        </div>
+      `)
+    })
+
+    socket.on('deleteUser', ({ userName }) => {
+      if (userName) {
+        $('.view').append(`
+          <div class="system">
+            <span class="msg-system">'${userName}'离开了群聊</span>  
+          </div>
+        `)
+      }
+    })
+
+    socket.on('userList', ({ userName, user }) => {
+      const userList = user.filter((item) => item !== userName);
+      $('.user-list ul').empty();
+      userList.forEach((item) => {
+        $('.user-list ul').append(`
+          <li class="user">
+            ${item} 
+          </li>
+        `)
+      })
+    })
+  </script>
+</body>
+
+</html>
