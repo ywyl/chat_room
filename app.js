@@ -29,7 +29,7 @@ io.on('connection', function (socket) {
 
     io.emit('addUser', { userName });
 
-    io.emit('userList', { userName, user });
+    io.emit('userList', { user });
   });
 
   socket.on('disconnect', function () {
@@ -40,5 +40,9 @@ io.on('connection', function (socket) {
 
     io.emit('deleteUser', { userName: socket.userName });
     io.emit('userList', { user });
+  });
+
+  socket.on('sendMsg', (data) => {
+    io.emit('receive', data);
   });
 });

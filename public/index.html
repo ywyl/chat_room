@@ -95,6 +95,53 @@
       border-bottom: 1px solid gray;
     }
 
+    .msg-mine {
+      display: flex;
+      justify-content: end;
+      margin: 10px;
+    }
+
+    .msg-other {
+      display: flex;
+      margin: 10px 0;
+    }
+
+    .icon {
+      width: 50px;
+      height: 50px;
+      margin: 0 10px;
+      background-color: rgb(128, 128, 128);
+    }
+
+    .msg-content {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .msg-user {
+      font-size: 12px;
+      color: gray;
+    }
+
+    .msg-mine-user {
+      font-size: 12px;
+      color: gray;
+      display: flex;
+      justify-content: end;
+    }
+
+    .msg-mine-info {
+      display: flex;
+      justify-content: end;
+    }
+
+    .msg-info {
+      display: inline-block;
+      padding: 2px 10px;
+      background-color: yellowgreen;
+      border-radius: 4px;
+    }
+
     .system {
       font-size: 14px;
       text-align: center;
@@ -106,6 +153,41 @@
       padding: 2px 8px;
       border-radius: 4px;
       background-color: lightgray;
+    }
+
+    .send {
+      display: flex;
+      flex-direction: column;
+      height: 195px;
+    }
+
+    .text-area {
+      width: 100%;
+      flex: 1;
+    }
+
+    .text {
+      resize: none;
+      width: 100%;
+      height: 100%;
+    }
+
+    .btn-area {
+      height: 20px;
+      display: flex;
+      justify-content: end;
+    }
+
+    .send-btn {
+      border: none;
+      cursor: pointer;
+      width: 80px;
+      height: 100%;
+    }
+
+    .send-btn:hover {
+      color: white;
+      background-color: #c4b5fd;
     }
   </style>
 </head>
@@ -135,10 +217,17 @@
       <div class="message">
         <div class="view">
           <!-- <div class="msg-system"></div> -->
-          <div class="msg-mine"></div>
-          <div class="msg-others"></div>
+          <!-- <div class="msg-mine"></div> -->
+          <!-- <div class="msg-others"></div> -->
         </div>
-        <div class="send"></div>
+        <div class="send">
+          <div class="text-area">
+            <textarea class="text" contenteditable=""></textarea>
+          </div>
+          <div class="btn-area">
+            <button class="send-btn">发送</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -149,8 +238,10 @@
   <script>
     const socket = io('http://localhost:3000');
 
+    let localUser = '';
+
     $('#login_btn').on('click', function () {
-      let userName = $('#name').val().trim();
+      const userName = $('#name').val().trim();
       if (!userName) {
         alert('请输入用户名');
         return;
@@ -166,7 +257,7 @@
       alert(msg);
       $('#user').text(userName);
 
-      const userList = user.filter((item) => item !== userName);
+      localUser = userName;
     });
 
     socket.on('addUser', ({ userName }) => {
@@ -187,8 +278,8 @@
       }
     })
 
-    socket.on('userList', ({ userName, user }) => {
-      const userList = user.filter((item) => item !== userName);
+    socket.on('userList', ({ user }) => {
+      const userList = user.filter((item) => item !== localUser);
       $('.user-list ul').empty();
       userList.forEach((item) => {
         $('.user-list ul').append(`
@@ -197,6 +288,48 @@
           </li>
         `)
       })
+    })
+
+    $('.send-btn').on('click', () => {
+      const msg = $('.text').val().trim();
+      $('.text').val('');
+
+      socket.emit('sendMsg', {
+        msg,
+        userName: localUser,
+      })
+    })
+
+    socket.on('receive', (data) => {
+      if (data.userName === localUser) {
+        $('.view').append(`
+          <div class="msg-mine">      
+            <div class="msg-content">
+              <div class="msg-mine-user">
+                ${data.userName}(${new Date().getTime()})
+              </div>
+              <div class="msg-mine-info">
+                <span class="msg-info">${data.msg}</span>
+              </div>  
+            </div>
+            <div class="icon"></div>
+          </div>
+        `)
+      } else {
+        $('.view').append(`
+          <div class="msg-other">
+            <div class="icon"></div>
+            <div class="msg-content">
+              <div class="msg-user">
+                ${data.userName}(${new Date().getTime()})
+              </div>
+              <div>
+                <span class="msg-info">${data.msg}</span>
+              </div>  
+            </div>
+          </div>
+        `)
+      }
     })
   </script>
 </body>
